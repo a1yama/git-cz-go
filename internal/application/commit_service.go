@@ -2,9 +2,11 @@ package application
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"github.com/a1yama/git-cz-go/internal/domain"
-	"github.com/a1yama/git-cz-go/internal/interfaces"  // インターフェースのインポート
+	"github.com/a1yama/git-cz-go/internal/interfaces"
+	"github.com/manifoldco/promptui"
 )
 
 type CommitService struct {
@@ -31,7 +33,12 @@ func (s *CommitService) Run() {
 		"chore: Miscellaneous tasks",
 	}
 
-	selectedType := s.inputHandler.SelectCommitType(commitTypes)
+	selectedType, err := s.selectCommitTypePrompt(commitTypes)
+	if err != nil {
+		fmt.Println("Prompt cancelled.")
+		os.Exit(1) // Exit the program if Ctrl+C is pressed
+	}
+
 	scope := s.inputHandler.PromptInput("Enter the scope of the change (optional): ")
 	summary := s.inputHandler.PromptInput("Enter a short description of the change: ")
 	if summary == "" {
@@ -52,4 +59,20 @@ func (s *CommitService) Run() {
 	} else {
 		fmt.Println("Commit cancelled.")
 	}
+}
+
+func (s *CommitService) selectCommitTypePrompt(commitTypes []string) (string, error) {
+	prompt := promptui.Select{
+		Label:             "Select a commit type",
+		Items:             commitTypes,
+		Size:              len(commitTypes), // Prevent scrolling
+		HideHelp:          true,             // Hide navigation help text
+	}
+
+	_, result, err := prompt.Run()
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Split(result, ":")[0], nil
 }

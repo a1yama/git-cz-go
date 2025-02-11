@@ -1,7 +1,6 @@
 package interfaces
 
 type InputHandler interface {
-	SelectCommitType(commitTypes []string) string
 	PromptInput(prompt string) string
 }
 
