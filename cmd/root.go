@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"github.com/a1yama/git-cz-go/internal/application"
@@ -6,7 +6,8 @@ import (
 	"github.com/a1yama/git-cz-go/internal/interfaces"
 )
 
-func main() {
+// Execute はプログラムのエントリーポイント
+func Execute() {
 	commitService := application.NewCommitService(
 		interfaces.NewConsoleInput(),
 		infrastructure.NewGitCommitExecutor(),
