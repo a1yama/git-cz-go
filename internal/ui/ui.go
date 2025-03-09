@@ -9,6 +9,7 @@ import (
 	"github.com/a1yama/git-cz-go/internal/model"
 	"github.com/a1yama/git-cz-go/internal/ui/components"
 	"github.com/a1yama/git-cz-go/internal/ui/styles"
+	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -93,12 +94,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		m.ready = true
 
+		// 各ステップにもウィンドウサイズを伝えます
+		if m.activeStep < len(m.steps) {
+			cmd := tea.WindowSizeMsg{
+				Width:  msg.Width,
+				Height: msg.Height,
+			}
+			updatedStep, stepCmd := m.steps[m.activeStep].Update(cmd)
+			m.steps[m.activeStep] = updatedStep
+			if stepCmd != nil {
+				cmds = append(cmds, stepCmd)
+			}
+		}
+
 	case tea.KeyMsg:
 		// Global keybindings
-		switch msg.String() {
-		case "ctrl+c", "q":
+		switch {
+		case key.Matches(msg, key.NewBinding(key.WithKeys("ctrl+c", "q"))):
 			return m, tea.Quit
-		case "esc":
+
+		case key.Matches(msg, key.NewBinding(key.WithKeys("esc"))):
 			if m.activeStep > 0 {
 				m.activeStep--
 				return m, m.steps[m.activeStep].Init()
@@ -106,7 +121,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 
-	// 以下のメッセージハンドリングを確認
 	case components.CommitTypeSelectedMsg:
 		m.commitMessage.Type = msg.Type
 		if m.config.UseEmoji {
@@ -117,29 +131,58 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		}
-		// 次のステップに進む
 		m.activeStep++
-		if m.activeStep < len(m.steps) {
-			return m, m.steps[m.activeStep].Init()
+		if m.activeStep >= len(m.steps) {
+			return m, tea.Quit
 		}
+		return m, m.steps[m.activeStep].Init()
 
 	case components.ScopeSubmittedMsg:
 		m.commitMessage.Scope = msg.Scope
 		m.activeStep++
-		if m.activeStep < len(m.steps) {
-			return m, m.steps[m.activeStep].Init()
-		}
+		return m, m.steps[m.activeStep].Init()
 
-		// 他のメッセージハンドリングも同様...
+	case components.SubjectSubmittedMsg:
+		m.commitMessage.Subject = msg.Subject
+		m.activeStep++
+		return m, m.steps[m.activeStep].Init()
+
+	case components.BreakingSubmittedMsg:
+		m.commitMessage.IsBreaking = msg.IsBreaking
+		m.activeStep++
+		return m, m.steps[m.activeStep].Init()
+
+	case components.BodySubmittedMsg:
+		m.commitMessage.Body = msg.Body
+		m.activeStep++
+		return m, m.steps[m.activeStep].Init()
+
+	case components.FooterTypeSubmittedMsg:
+		m.commitMessage.FooterType = msg.FooterType
+		m.activeStep++
+		return m, m.steps[m.activeStep].Init()
+
+	case components.FooterValueSubmittedMsg:
+		m.commitMessage.FooterValue = msg.Value
+		m.activeStep++
+		return m, m.steps[m.activeStep].Init()
+
+	case components.ConfirmMsg:
+		if msg.Confirmed {
+			commitMsg := m.commitMessage.Format()
+			return m, tea.Sequence(
+				commitCmd(commitMsg),
+				tea.Quit,
+			)
+		}
+		return m, tea.Quit
 	}
 
-	// 現在のステップにメッセージを渡す
+	// Pass the message to the current step
 	if m.activeStep < len(m.steps) {
-		newModel, cmd := m.steps[m.activeStep].Update(msg)
-		m.steps[m.activeStep] = newModel
-		if cmd != nil {
-			cmds = append(cmds, cmd)
-		}
+		updatedStep, cmd := m.steps[m.activeStep].Update(msg)
+		m.steps[m.activeStep] = updatedStep
+		cmds = append(cmds, cmd)
 	}
 
 	return m, tea.Batch(cmds...)

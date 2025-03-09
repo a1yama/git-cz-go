@@ -82,16 +82,15 @@ func (m CommitTypeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "enter":
+		// Check for enter to select an item
+		if msg.String() == "enter" {
 			i, ok := m.list.SelectedItem().(commitTypeItem)
 			if ok {
-				// このメッセージを親モデルに送信
 				return m, func() tea.Msg {
 					return CommitTypeSelectedMsg{Type: i.type_}
 				}
 			}
-		case "q", "ctrl+c":
+		} else if msg.String() == "q" || msg.String() == "ctrl+c" {
 			return m, tea.Quit
 		}
 	}

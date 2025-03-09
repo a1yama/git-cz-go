@@ -1,7 +1,6 @@
 package components
 
 import (
-	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -32,22 +31,22 @@ func (m BreakingModel) Init() tea.Cmd {
 func (m BreakingModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, key.NewBinding(key.WithKeys("y", "Y"))):
+		switch msg.String() {
+		case "y", "Y":
 			m.isBreaking = true
 			return m, func() tea.Msg {
 				return BreakingSubmittedMsg{IsBreaking: true}
 			}
-		case key.Matches(msg, key.NewBinding(key.WithKeys("n", "N"))):
+		case "n", "N":
 			m.isBreaking = false
 			return m, func() tea.Msg {
 				return BreakingSubmittedMsg{IsBreaking: false}
 			}
-		case key.Matches(msg, key.NewBinding(key.WithKeys("enter"))):
+		case "enter":
 			return m, func() tea.Msg {
 				return BreakingSubmittedMsg{IsBreaking: m.isBreaking}
 			}
-		case key.Matches(msg, key.NewBinding(key.WithKeys("tab", "left", "right", "space"))):
+		case "tab", "left", "right", "space":
 			m.isBreaking = !m.isBreaking
 		}
 	}

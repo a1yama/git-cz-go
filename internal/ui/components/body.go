@@ -45,7 +45,7 @@ func (m BodyModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		// Ctrl+Enter または Enter を処理
-		if msg.Type == tea.KeyCtrlJ || msg.Type == tea.KeyEnter && msg.Alt {
+		if (msg.Type == tea.KeyCtrlJ) || (msg.Type == tea.KeyEnter && msg.Alt) {
 			return m, func() tea.Msg {
 				return BodySubmittedMsg{Body: m.textarea.Value()}
 			}
