@@ -78,19 +78,38 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ready = true
 
 	case tea.KeyMsg:
-		// Global keybindings
-		switch {
-		case key.Matches(msg, key.NewBinding(key.WithKeys("ctrl+c", "q"))):
-			return m, tea.Quit
+		// テキスト入力フォーカス中はグローバルショートカットを無効化
+		isInputFocused := m.activeStep == int(StepSubject)
 
-		case key.Matches(msg, key.NewBinding(key.WithKeys("esc"))):
-			if m.activeStep > 0 {
-				m.activeStep--
-				return m, m.steps[m.activeStep].Init()
+		// Global keybindings（テキスト入力中は無効）
+		if !isInputFocused {
+			switch {
+			case key.Matches(msg, key.NewBinding(key.WithKeys("ctrl+c", "q"))):
+				return m, tea.Quit
+
+			case key.Matches(msg, key.NewBinding(key.WithKeys("esc"))):
+				if m.activeStep > 0 {
+					m.activeStep--
+					return m, m.steps[m.activeStep].Init()
+				}
+				return m, tea.Quit
 			}
-			return m, tea.Quit
+		} else {
+			// テキスト入力中はCtrl+Cのみ終了として扱う
+			if key.Matches(msg, key.NewBinding(key.WithKeys("ctrl+c"))) {
+				return m, tea.Quit
+			}
+			// Escキーはテキスト入力中でも前のステップに戻る
+			if key.Matches(msg, key.NewBinding(key.WithKeys("esc"))) {
+				if m.activeStep > 0 {
+					m.activeStep--
+					return m, m.steps[m.activeStep].Init()
+				}
+				return m, tea.Quit
+			}
 		}
 
+	// 他のメッセージハンドリング...
 	case components.CommitTypeSelectedMsg:
 		m.commitMessage.Type = msg.Type
 		if m.config.UseEmoji {
