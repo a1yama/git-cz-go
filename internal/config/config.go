@@ -17,15 +17,9 @@ type CommitType struct {
 
 // Config holds the configuration for git-cz-go
 type Config struct {
-	Types             []CommitType `json:"types"`
-	UseEmoji          bool         `json:"useEmoji"`
-	CustomTemplate    string       `json:"customTemplate,omitempty"`
-	SkipScope         bool         `json:"skipScope"`
-	SkipBody          bool         `json:"skipBody"`
-	SkipBreakingBody  bool         `json:"skipBreakingBody"`
-	SkipFooter        bool         `json:"skipFooter"`
-	MaxSubjectLength  int          `json:"maxSubjectLength"`
-	MaxBodyLineLength int          `json:"maxBodyLineLength"`
+	Types            []CommitType `json:"types"`
+	UseEmoji         bool         `json:"useEmoji"`
+	MaxSubjectLength int          `json:"maxSubjectLength"`
 }
 
 // DefaultConfig returns the default configuration
@@ -44,13 +38,8 @@ func DefaultConfig() *Config {
 			{Type: "chore", Description: "Other changes that don't modify src or test files", Emoji: "♻️"},
 			{Type: "revert", Description: "Reverts a previous commit", Emoji: "🗑"},
 		},
-		UseEmoji:          false,
-		SkipScope:         false,
-		SkipBody:          false,
-		SkipBreakingBody:  false,
-		SkipFooter:        false,
-		MaxSubjectLength:  100,
-		MaxBodyLineLength: 100,
+		UseEmoji:         false,
+		MaxSubjectLength: 100,
 	}
 }
 
