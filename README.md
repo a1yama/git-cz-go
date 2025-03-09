@@ -2,8 +2,6 @@
 
 A beautiful and interactive Conventional Commits CLI tool written in Go using [Bubble Tea](https://github.com/charmbracelet/bubbletea).
 
-![git-cz-go demo](https://via.placeholder.com/800x400.png?text=git-cz-go+Demo)
-
 ## Features
 
 - 💎 Beautiful TUI with keyboard navigation
@@ -28,13 +26,19 @@ Download the appropriate binary for your platform from the [GitHub Releases](htt
 
 ## Usage
 
-Simply run `git-cz` in a git repository to start the interactive commit process.
+Simply run `git-cz-go` in a git repository to start the interactive commit process.
 
 ```bash
-git-cz
+git-cz-go
 ```
 
-You can also use it as a git subcommand if you add it to your PATH:
+You can also create an alias in your git config:
+
+```bash
+git config --global alias.cz "!git-cz-go"
+```
+
+After setting up this alias, you can simply use:
 
 ```bash
 git cz
@@ -65,12 +69,7 @@ Example configuration:
     }
   ],
   "useEmoji": true,
-  "skipScope": false,
-  "skipBody": false,
-  "skipBreakingBody": false,
-  "skipFooter": false,
-  "maxSubjectLength": 100,
-  "maxBodyLineLength": 100
+  "maxSubjectLength": 100
 }
 ```
 
@@ -88,10 +87,10 @@ git clone https://github.com/a1yama/git-cz-go.git
 cd git-cz-go
 
 # Build
-go build -o git-cz ./cmd/git-cz-go
+go build -o git-cz-go ./cmd/git-cz-go
 
 # Run
-./git-cz
+./git-cz-go
 ```
 
 ### Creating a release
