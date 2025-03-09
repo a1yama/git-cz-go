@@ -1,66 +1,109 @@
 # git-cz-go
 
-`git-cz-go` は、Conventional Commits に基づいたコミットメッセージを簡単に生成できる Go 製の CLI ツールです。
+A beautiful and interactive Conventional Commits CLI tool written in Go using [Bubble Tea](https://github.com/charmbracelet/bubbletea).
 
-## 特徴
-- インタラクティブなプロンプトでコミットタイプ、スコープ、メッセージを簡単に指定可能。
-- Git コマンドと連携し、直感的な操作性。
+![git-cz-go demo](https://via.placeholder.com/800x400.png?text=git-cz-go+Demo)
 
-## インストール
-以下のコマンドでインストールできます：
+## Features
+
+- 💎 Beautiful TUI with keyboard navigation
+- 🚀 Interactive prompts for all parts of the commit message
+- 📋 Conventional Commits format support
+- 🔍 Scope suggestions from your project structure
+- 😀 Optional emoji support
+- ⚙️ Customizable via configuration file
+- 🌈 Color-coded interface
+
+## Installation
+
+### Using Go
 
 ```bash
-go install github.com/a1yama/git-cz-go@latest
+go install github.com/a1yama/git-cz-go/cmd/git-cz-go@latest
 ```
 
-> `go install` により、`$GOPATH/bin` にバイナリがインストールされます。
-> 必要に応じて `$GOPATH/bin` を `PATH` に追加してください。
+### From Releases
 
-例：
+Download the appropriate binary for your platform from the [GitHub Releases](https://github.com/a1yama/git-cz-go/releases) page.
+
+## Usage
+
+Simply run `git-cz` in a git repository to start the interactive commit process.
 
 ```bash
-echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> ~/.bashrc
-source ~/.bashrc
+git-cz
 ```
 
-## 使い方
-任意の Git プロジェクト内で以下を実行します：
+You can also use it as a git subcommand if you add it to your PATH:
 
 ```bash
-git-cz-go
+git cz
 ```
 
-### 手順
-1. コミットタイプを選択します（例: `feat`、`fix` など）。
-2. 変更のスコープを入力します（オプション）。
-3. 簡単な説明を入力します。
-4. 詳細な説明（オプション）を入力します。
-5. コミットメッセージを確認し、コミットを実行します。
+## Configuration
 
-## 開発
-このプロジェクトをローカルでビルドするには：
+git-cz-go can be configured using a JSON file. The configuration file is searched for in the following locations:
+
+1. `./.git-cz.json` (current directory)
+2. `~/.git-cz.json` (home directory)
+3. `~/.config/git-cz/config.json` (XDG config directory)
+
+Example configuration:
+
+```json
+{
+  "types": [
+    {
+      "type": "feat",
+      "description": "A new feature",
+      "emoji": "✨"
+    },
+    {
+      "type": "fix",
+      "description": "A bug fix",
+      "emoji": "🐛"
+    }
+  ],
+  "useEmoji": true,
+  "skipScope": false,
+  "skipBody": false,
+  "skipBreakingBody": false,
+  "skipFooter": false,
+  "maxSubjectLength": 100,
+  "maxBodyLineLength": 100
+}
+```
+
+## Development
+
+### Prerequisites
+
+- Go 1.20 or higher
+
+### Build from source
 
 ```bash
+# Clone the repository
 git clone https://github.com/a1yama/git-cz-go.git
 cd git-cz-go
-go build -o git-cz-go ./cmd
+
+# Build
+go build -o git-cz ./cmd/git-cz-go
+
+# Run
+./git-cz
 ```
 
-ローカルで実行する場合：
+### Creating a release
 
-```bash
-./git-cz-go
-```
+1. Create a tag following semantic versioning
+   ```
+   git tag -a v0.1.0 -m "First release"
+   git push origin v0.1.0
+   ```
 
-or 
+2. GitHub Actions will automatically build and publish the release
 
-```bash
-sudo mv git-cz-go /usr/local/bin/
-git-cz-go
-```
+## License
 
-## 貢献
-バグ報告や新機能の提案は [GitHub Issues](https://github.com/a1yama/git-cz-go/issues) で受け付けています。
-
-## ライセンス
-このプロジェクトは [MIT ライセンス](LICENSE) の下で提供されています。
+MIT
