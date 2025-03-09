@@ -38,7 +38,7 @@ func DefaultConfig() *Config {
 			{Type: "chore", Description: "Other changes that don't modify src or test files", Emoji: "♻️"},
 			{Type: "revert", Description: "Reverts a previous commit", Emoji: "🗑"},
 		},
-		UseEmoji:         false,
+		UseEmoji:         true,
 		MaxSubjectLength: 100,
 	}
 }

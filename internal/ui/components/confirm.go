@@ -1,7 +1,6 @@
 package components
 
 import (
-	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -32,23 +31,31 @@ func (m ConfirmModel) Init() tea.Cmd {
 func (m ConfirmModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch {
-		case key.Matches(msg, key.NewBinding(key.WithKeys("y", "Y"))):
+		switch msg.String() {
+		case "y", "Y":
 			m.confirmed = true
 			return m, func() tea.Msg {
 				return ConfirmMsg{Confirmed: true}
 			}
-		case key.Matches(msg, key.NewBinding(key.WithKeys("n", "N"))):
+		case "n", "N":
 			m.confirmed = false
 			return m, func() tea.Msg {
 				return ConfirmMsg{Confirmed: false}
 			}
-		case key.Matches(msg, key.NewBinding(key.WithKeys("enter"))):
+		case "enter":
 			return m, func() tea.Msg {
 				return ConfirmMsg{Confirmed: m.confirmed}
 			}
-		case key.Matches(msg, key.NewBinding(key.WithKeys("tab", "left", "right", "space"))):
+		case " ", "space":
+			// スペースキーのトグル処理を明示的に追加
 			m.confirmed = !m.confirmed
+			return m, nil
+		}
+
+		// 他のキーマッチングも確認
+		if msg.Type == tea.KeySpace {
+			m.confirmed = !m.confirmed
+			return m, nil
 		}
 	}
 
