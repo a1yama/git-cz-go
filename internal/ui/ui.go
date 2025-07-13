@@ -23,6 +23,7 @@ type Model struct {
 	height        int
 	ready         bool
 	err           error
+	stagedFiles   []string
 }
 
 // Step represents a commit message input step
@@ -36,18 +37,25 @@ const (
 
 // New creates a new UI model
 func New(cfg *config.Config) Model {
+	// Get staged files
+	stagedFiles, err := git.GetStagedFiles()
+	if err != nil {
+		stagedFiles = []string{} // Continue with empty list on error
+	}
+
 	// ステップを初期化
 	steps := []tea.Model{
-		components.NewCommitTypeModel(cfg.Types, cfg.UseEmoji),
-		components.NewSubjectModel(cfg.MaxSubjectLength),
+		components.NewCommitTypeModel(cfg.Types, cfg.UseEmoji, stagedFiles),
+		components.NewSubjectModel(cfg.MaxSubjectLength, stagedFiles),
 		components.NewConfirmModel(),
 	}
 
 	return Model{
-		config:     cfg,
-		activeStep: 0,
-		steps:      steps, // 初期化したステップを設定
-		ready:      false,
+		config:      cfg,
+		activeStep:  0,
+		steps:       steps, // 初期化したステップを設定
+		ready:       false,
+		stagedFiles: stagedFiles,
 	}
 }
 
@@ -57,8 +65,8 @@ func (m Model) Init() tea.Cmd {
 	if len(m.steps) == 0 {
 		// 万が一ステップが空の場合は、ここで初期化
 		m.steps = []tea.Model{
-			components.NewCommitTypeModel(m.config.Types, m.config.UseEmoji),
-			components.NewSubjectModel(m.config.MaxSubjectLength),
+			components.NewCommitTypeModel(m.config.Types, m.config.UseEmoji, m.stagedFiles),
+			components.NewSubjectModel(m.config.MaxSubjectLength, m.stagedFiles),
 			components.NewConfirmModel(),
 		}
 	}

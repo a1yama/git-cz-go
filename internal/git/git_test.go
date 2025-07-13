@@ -129,6 +129,73 @@ func TestGetGitRootDir(t *testing.T) {
 	}
 }
 
+func TestGetStagedFiles(t *testing.T) {
+	// Create a temporary Git repository
+	tempDir := setupGitRepo(t)
+	defer os.RemoveAll(tempDir)
+
+	// Change to the repository directory
+	originalDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get current directory: %v", err)
+	}
+	defer os.Chdir(originalDir)
+
+	if err := os.Chdir(tempDir); err != nil {
+		t.Fatalf("Failed to change to repository directory: %v", err)
+	}
+
+	// Test with no staged files
+	files, err := GetStagedFiles()
+	if err != nil {
+		t.Fatalf("GetStagedFiles() failed: %v", err)
+	}
+	if len(files) != 0 {
+		t.Errorf("GetStagedFiles() = %v, want []", files)
+	}
+
+	// Create and stage multiple files
+	testFiles := []string{"file1.txt", "file2.go", "dir/file3.md"}
+	for _, file := range testFiles {
+		filePath := filepath.Join(tempDir, file)
+		dir := filepath.Dir(filePath)
+		if dir != tempDir {
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				t.Fatalf("Failed to create directory: %v", err)
+			}
+		}
+		if err := os.WriteFile(filePath, []byte("test content"), 0644); err != nil {
+			t.Fatalf("Failed to create test file %s: %v", file, err)
+		}
+	}
+
+	// Stage all files
+	cmd := exec.Command("git", "add", ".")
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("Failed to stage files: %v", err)
+	}
+
+	// Test with staged files
+	files, err = GetStagedFiles()
+	if err != nil {
+		t.Fatalf("GetStagedFiles() failed: %v", err)
+	}
+	if len(files) != len(testFiles) {
+		t.Errorf("GetStagedFiles() returned %d files, want %d", len(files), len(testFiles))
+	}
+
+	// Verify all expected files are in the result
+	fileMap := make(map[string]bool)
+	for _, f := range files {
+		fileMap[f] = true
+	}
+	for _, expected := range testFiles {
+		if !fileMap[expected] {
+			t.Errorf("Expected file %s not found in staged files", expected)
+		}
+	}
+}
+
 func TestCommit(t *testing.T) {
 	// Skip in CI environments
 	if os.Getenv("CI") != "" {
