@@ -39,11 +39,12 @@ func (i commitTypeItem) Description() string { return i.description }
 
 // CommitTypeModel handles the commit type selection
 type CommitTypeModel struct {
-	list list.Model
+	list        list.Model
+	stagedFiles []string
 }
 
 // NewCommitTypeModel creates a new commit type model
-func NewCommitTypeModel(types []config.CommitType, useEmoji bool) CommitTypeModel {
+func NewCommitTypeModel(types []config.CommitType, useEmoji bool, stagedFiles []string) CommitTypeModel {
 	items := make([]list.Item, len(types))
 	for i, t := range types {
 		items[i] = commitTypeItem{
@@ -111,7 +112,8 @@ func NewCommitTypeModel(types []config.CommitType, useEmoji bool) CommitTypeMode
 		MarginBottom(1)
 
 	return CommitTypeModel{
-		list: listModel,
+		list:        listModel,
+		stagedFiles: stagedFiles,
 	}
 }
 
@@ -174,7 +176,16 @@ func (m CommitTypeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View renders the model
 func (m CommitTypeModel) View() string {
+	// Build staged files display
+	filesDisplay := ""
+	if len(m.stagedFiles) > 0 {
+		filesDisplay = "\n\n📁 Staged files:\n"
+		for _, file := range m.stagedFiles {
+			filesDisplay += fmt.Sprintf("   • %s\n", file)
+		}
+	}
+
 	// Add a hint about number selection
 	hint := "\nTip: You can also select a commit type by pressing its number (1-" + fmt.Sprintf("%d", len(m.list.Items())) + ")"
-	return m.list.View() + hint
+	return m.list.View() + filesDisplay + hint
 }

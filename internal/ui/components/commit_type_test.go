@@ -1,6 +1,7 @@
 package components
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/a1yama/git-cz-go/internal/config"
@@ -14,8 +15,8 @@ func TestNewCommitTypeModel(t *testing.T) {
 		{Type: "fix", Description: "A bug fix", Emoji: "🐛"},
 	}
 
-	// Create model with emoji disabled
-	model := NewCommitTypeModel(types, false)
+	// Create model with emoji disabled and no staged files
+	model := NewCommitTypeModel(types, false, []string{})
 
 	// Verify the model
 	view := model.View()
@@ -61,8 +62,9 @@ func TestCommitTypeModelUpdate(t *testing.T) {
 		{Type: "fix", Description: "A bug fix", Emoji: "🐛"},
 	}
 
-	// Create model
-	model := NewCommitTypeModel(types, false)
+	// Create model with staged files
+	stagedFiles := []string{"file1.txt", "src/main.go"}
+	model := NewCommitTypeModel(types, false, stagedFiles)
 
 	// Test window size message
 	windowSizeMsg := tea.WindowSizeMsg{Width: 100, Height: 50}
@@ -96,5 +98,35 @@ func TestCommitTypeModelUpdate(t *testing.T) {
 	// Check that a command was returned (for selecting the item)
 	if cmd == nil {
 		t.Error("Update() with numerical key press returned a nil command")
+	}
+}
+
+func TestCommitTypeModelViewWithStagedFiles(t *testing.T) {
+	// Create test commit types
+	types := []config.CommitType{
+		{Type: "feat", Description: "A new feature", Emoji: "✨"},
+		{Type: "fix", Description: "A bug fix", Emoji: "🐛"},
+	}
+
+	// Test with no staged files
+	model := NewCommitTypeModel(types, false, []string{})
+	view := model.View()
+	if strings.Contains(view, "Staged files:") {
+		t.Error("View() should not display staged files section when there are no staged files")
+	}
+
+	// Test with staged files
+	stagedFiles := []string{"file1.txt", "src/main.go", "README.md"}
+	model = NewCommitTypeModel(types, false, stagedFiles)
+	view = model.View()
+
+	if !strings.Contains(view, "Staged files:") {
+		t.Error("View() should display staged files section when there are staged files")
+	}
+
+	for _, file := range stagedFiles {
+		if !strings.Contains(view, file) {
+			t.Errorf("View() should display staged file %s", file)
+		}
 	}
 }

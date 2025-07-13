@@ -14,13 +14,14 @@ type SubjectSubmittedMsg struct {
 
 // SubjectModel handles the commit subject input
 type SubjectModel struct {
-	textInput  textinput.Model
-	maxLength  int
-	validInput bool
+	textInput   textinput.Model
+	maxLength   int
+	validInput  bool
+	stagedFiles []string
 }
 
 // NewSubjectModel creates a new subject model
-func NewSubjectModel(maxLength int) SubjectModel {
+func NewSubjectModel(maxLength int, stagedFiles []string) SubjectModel {
 	ti := textinput.New()
 	ti.Placeholder = "Write a concise description of the change"
 	ti.Focus()
@@ -28,9 +29,10 @@ func NewSubjectModel(maxLength int) SubjectModel {
 	ti.Width = 50
 
 	return SubjectModel{
-		textInput:  ti,
-		maxLength:  maxLength,
-		validInput: false,
+		textInput:   ti,
+		maxLength:   maxLength,
+		validInput:  false,
+		stagedFiles: stagedFiles,
 	}
 }
 
@@ -89,6 +91,14 @@ func (m SubjectModel) View() string {
 		"\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("7")).Render("- Use imperative, present tense: \"add\" not \"added\"") +
 		"\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("7")).Render("- Don't capitalize the first letter") +
 		"\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("7")).Render("- No period at the end")
+
+	// Add staged files display
+	if len(m.stagedFiles) > 0 {
+		view += "\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("12")).Render("📁 Staged files:")
+		for _, file := range m.stagedFiles {
+			view += "\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("7")).Render("   • "+file)
+		}
+	}
 
 	return view
 }
