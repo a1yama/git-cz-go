@@ -195,10 +195,15 @@ func (m Model) View() string {
 		content = m.steps[m.activeStep].View()
 	}
 
+	helpText := "↑/↓: Navigate • Enter: Select • Esc: Back • Ctrl+C/Q: Quit"
+	if m.activeStep == int(StepType) {
+		helpText = "↑/↓: Navigate • 1-9: Quick Select • Enter: Select • Esc: Back • Ctrl+C/Q: Quit"
+	}
+
 	return fmt.Sprintf("%s\n\n%s\n\n%s",
 		header,
 		content,
-		styles.HelpStyle.Render("↑/↓: Navigate • Enter: Select • Esc: Back • Ctrl+C/Q: Quit"),
+		styles.HelpStyle.Render(helpText),
 	)
 }
 

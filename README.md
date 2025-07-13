@@ -8,6 +8,7 @@ A beautiful and interactive Conventional Commits CLI tool written in Go using [B
 - 🚀 Interactive prompts for all parts of the commit message
 - 📋 Conventional Commits format support
 - 🔍 Scope suggestions from your project structure
+- 🔢 Quick selection of commit types using numbers
 - 😀 Optional emoji support
 - ⚙️ Customizable via configuration file
 - 🌈 Color-coded interface
@@ -32,6 +33,16 @@ Simply run `git-cz-go` in a git repository to start the interactive commit proce
 git-cz-go
 ```
 
+When selecting a commit type, you can either:
+- Use arrow keys to navigate and press Enter to select
+- Press the number key (1-9) corresponding to the commit type you want to select
+
+To view the list of available commit types:
+
+```bash
+git-cz-go --types
+```
+
 You can also create an alias in your git config:
 
 ```bash
@@ -42,6 +53,12 @@ After setting up this alias, you can simply use:
 
 ```bash
 git cz
+```
+
+Or to view commit types:
+
+```bash
+git cz --types
 ```
 
 ## Configuration
