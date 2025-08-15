@@ -27,15 +27,20 @@ func (i commitTypeItem) FilterValue() string { return i.type_ + " " + i.descript
 
 // Title returns the title for the list item
 func (i commitTypeItem) Title() string {
-	prefix := fmt.Sprintf("%d. ", i.index)
+	prefix := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("243")).
+		Render(fmt.Sprintf("%d", i.index))
+	
 	if i.useEmoji && i.emoji != "" {
-		return prefix + i.emoji + "  " + i.type_
+		return fmt.Sprintf("%s %s %s", prefix, i.emoji, i.type_)
 	}
-	return prefix + i.type_
+	return fmt.Sprintf("%s %s", prefix, i.type_)
 }
 
 // Description returns the description for the list item
-func (i commitTypeItem) Description() string { return i.description }
+func (i commitTypeItem) Description() string { 
+	return fmt.Sprintf("• %s", i.description)
+}
 
 // CommitTypeModel handles the commit type selection
 type CommitTypeModel struct {
@@ -55,60 +60,53 @@ func NewCommitTypeModel(types []config.CommitType, useEmoji bool) CommitTypeMode
 		}
 	}
 
-	// デフォルトのサイズ
-	width := 80
-	height := 15
+	// コンパクトなサイズ
+	width := 70
+	height := len(types) + 2 // より適切な高さ
 
 	// Set up list with custom delegate
 	delegate := list.NewDefaultDelegate()
+	
+	// 項目の高さを1に設定してコンパクトに
+	delegate.SetHeight(1)
+	delegate.SetSpacing(0)
 
-	// Customize delegate styles to ensure list items are visible
-	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
-		Foreground(lipgloss.Color("#FFFFFF")).
-		Background(lipgloss.Color("#0077CC")).
+	// モダンなカラーパレット
+	selectedBg := lipgloss.Color("62")    // 青緑
+	selectedFg := lipgloss.Color("230")   // 明るい黄色
+	normalFg := lipgloss.Color("39")      // 青
+	descFg := lipgloss.Color("245")       // グレー
+
+	// Customize delegate styles - 選択時のスタイル
+	delegate.Styles.SelectedTitle = lipgloss.NewStyle().
+		Foreground(selectedFg).
+		Background(selectedBg).
 		Bold(true).
-		Padding(0, 1)
+		PaddingLeft(1).
+		PaddingRight(1)
 
-	delegate.Styles.SelectedDesc = delegate.Styles.SelectedDesc.
-		Foreground(lipgloss.Color("#DDDDDD")).
-		Background(lipgloss.Color("#0077CC")).
-		Padding(0, 1)
+	delegate.Styles.SelectedDesc = lipgloss.NewStyle().
+		Foreground(selectedFg).
+		Background(selectedBg).
+		Italic(true).
+		PaddingLeft(1).
+		PaddingRight(1)
 
-	// Make non-selected items more visible too
-	delegate.Styles.NormalTitle = delegate.Styles.NormalTitle.
-		Foreground(lipgloss.Color("#0077CC")).
+	// 通常時のスタイル
+	delegate.Styles.NormalTitle = lipgloss.NewStyle().
+		Foreground(normalFg).
 		Bold(true).
-		Padding(0, 1)
+		PaddingLeft(1)
 
-	delegate.Styles.NormalDesc = delegate.Styles.NormalDesc.
-		Foreground(lipgloss.Color("#666666")).
-		Padding(0, 1)
+	delegate.Styles.NormalDesc = lipgloss.NewStyle().
+		Foreground(descFg).
+		PaddingLeft(1)
 
 	listModel := list.New(items, delegate, width, height)
-	listModel.Title = "Commit Types"
-	listModel.SetShowHelp(true) // Show help text
-	listModel.SetFilteringEnabled(true)
-
-	// Customize list styles
-	listModel.Styles.Title = lipgloss.NewStyle().
-		MarginLeft(2).
-		Bold(true).
-		Foreground(lipgloss.Color("#0077CC"))
-
-	listModel.Styles.PaginationStyle = lipgloss.NewStyle().
-		Padding(0, 2)
-
-	// Make sure the list itself is visible
-	listModel.Styles.NoItems = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#FF0000")).
-		MarginLeft(2).
-		MarginTop(1)
-
-	// Ensure help text is visible
-	listModel.Styles.HelpStyle = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#666666")).
-		MarginLeft(2).
-		MarginBottom(1)
+	listModel.SetShowHelp(false) // ヘルプを非表示にしてコンパクトに
+	listModel.SetFilteringEnabled(false) // フィルタリングも無効にして簡潔に
+	listModel.SetShowStatusBar(false) // ステータスバーも非表示
+	listModel.SetShowTitle(false) // タイトルも非表示
 
 	return CommitTypeModel{
 		list: listModel,
@@ -128,8 +126,17 @@ func (m CommitTypeModel) Init() tea.Cmd {
 func (m CommitTypeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.list.SetWidth(msg.Width - 4)
-		m.list.SetHeight(msg.Height - 10)
+		// 最適な幅と高さを設定
+		width := msg.Width - 4
+		if width > 70 {
+			width = 70
+		}
+		height := len(m.list.Items()) + 2
+		if height > msg.Height-8 {
+			height = msg.Height - 8
+		}
+		m.list.SetWidth(width)
+		m.list.SetHeight(height)
 		return m, nil
 
 	case tea.KeyMsg:
@@ -174,7 +181,12 @@ func (m CommitTypeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View renders the model
 func (m CommitTypeModel) View() string {
-	// Add a hint about number selection
-	hint := "\nTip: You can also select a commit type by pressing its number (1-" + fmt.Sprintf("%d", len(m.list.Items())) + ")"
-	return m.list.View() + hint
+	// コンパクトなヒント
+	hintStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("243")).
+		MarginTop(1).
+		Italic(true)
+	
+	hint := hintStyle.Render("💡 Press number keys (1-9) for quick selection")
+	return m.list.View() + "\n" + hint
 }

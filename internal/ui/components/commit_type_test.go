@@ -40,18 +40,62 @@ func TestCommitTypeItemTitle(t *testing.T) {
 	}
 
 	title := item.Title()
-	expected := "1. feat"
-	if title != expected {
-		t.Errorf("Title() without emoji returned %q, expected %q", title, expected)
+	// 新しい形式では番号は styled prefix で、"1 feat"形式になる
+	if title == "" {
+		t.Error("Title() without emoji returned empty string")
+	}
+	// スタイルを含むので、正確な文字列マッチングではなく、含まれる内容をチェック
+	if !containsText(title, "1") || !containsText(title, "feat") {
+		t.Errorf("Title() without emoji should contain '1' and 'feat', got %q", title)
 	}
 
 	// Test with emoji
 	item.useEmoji = true
 	title = item.Title()
-	expected = "1. ✨  feat"
-	if title != expected {
-		t.Errorf("Title() with emoji returned %q, expected %q", title, expected)
+	if !containsText(title, "1") || !containsText(title, "✨") || !containsText(title, "feat") {
+		t.Errorf("Title() with emoji should contain '1', '✨' and 'feat', got %q", title)
 	}
+}
+
+// Helper function to check if styled text contains expected content
+func containsText(styled, expected string) bool {
+	// Remove ANSI escape sequences and check content
+	cleaned := stripANSI(styled)
+	return len(cleaned) > 0 && contains(cleaned, expected)
+}
+
+// Simple contains check
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && findSubstring(s, substr)
+}
+
+func findSubstring(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
+
+// Simple ANSI escape sequence stripper
+func stripANSI(s string) string {
+	result := ""
+	inEscape := false
+	for _, r := range s {
+		if r == '\x1b' {
+			inEscape = true
+			continue
+		}
+		if inEscape {
+			if r == 'm' {
+				inEscape = false
+			}
+			continue
+		}
+		result += string(r)
+	}
+	return result
 }
 
 func TestCommitTypeModelUpdate(t *testing.T) {
