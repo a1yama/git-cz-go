@@ -61,7 +61,7 @@ func (m BodyModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View renders the body input
 func (m BodyModel) View() string {
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
-	
+
 	return m.textarea.View() + "\n\n" +
 		helpStyle.Render("📝 Body provides additional context (Ctrl+D to continue, optional)")
 }

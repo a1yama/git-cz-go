@@ -60,7 +60,7 @@ func (m ScopeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View renders the scope input
 func (m ScopeModel) View() string {
 	helpStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("241"))
-	
+
 	return m.textInput.View() + "\n\n" +
 		helpStyle.Render("📦 Scope narrows the context of the change (optional)")
 }

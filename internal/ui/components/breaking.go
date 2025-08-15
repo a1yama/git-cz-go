@@ -77,9 +77,9 @@ func (m BreakingModel) View() string {
 		cursor := "  "
 		if i == m.cursor {
 			cursor = "▸ "
-			result += selectedStyle.Render(cursor + option) + "\n"
+			result += selectedStyle.Render(cursor+option) + "\n"
 		} else {
-			result += normalStyle.Render(cursor + option) + "\n"
+			result += normalStyle.Render(cursor+option) + "\n"
 		}
 	}
 

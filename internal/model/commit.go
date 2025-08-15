@@ -2,14 +2,14 @@ package model
 
 // CommitMessage represents a conventional commit message structure
 type CommitMessage struct {
-	Type       string
-	Scope      string
-	Subject    string
-	Body       string
-	Breaking   bool
-	FooterType string
+	Type        string
+	Scope       string
+	Subject     string
+	Body        string
+	Breaking    bool
+	FooterType  string
 	FooterValue string
-	Emoji      string
+	Emoji       string
 }
 
 // ValidateSubject checks if the subject is valid
@@ -27,7 +27,7 @@ func (c *CommitMessage) ValidateSubject(maxLength int) bool {
 		prefix += "!"
 	}
 	prefix += ": "
-	
+
 	totalLength := len(prefix) + len(c.Subject)
 	if c.Emoji != "" {
 		totalLength += len(c.Emoji) + 1 // +1 for the space

@@ -91,8 +91,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		// テキスト入力フォーカス中はグローバルショートカットを無効化
-		isInputFocused := m.activeStep == int(StepScope) || 
-			m.activeStep == int(StepSubject) || 
+		isInputFocused := m.activeStep == int(StepScope) ||
+			m.activeStep == int(StepSubject) ||
 			m.activeStep == int(StepBody) ||
 			m.activeStep == int(StepFooter)
 
