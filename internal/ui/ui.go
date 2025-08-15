@@ -30,7 +30,11 @@ type Step int
 
 const (
 	StepType Step = iota
+	StepScope
 	StepSubject
+	StepBody
+	StepBreaking
+	StepFooter
 	StepConfirm
 )
 
@@ -39,7 +43,11 @@ func New(cfg *config.Config) Model {
 	// ステップを初期化
 	steps := []tea.Model{
 		components.NewCommitTypeModel(cfg.Types, cfg.UseEmoji),
+		components.NewScopeModel(),
 		components.NewSubjectModel(cfg.MaxSubjectLength),
+		components.NewBodyModel(),
+		components.NewBreakingModel(),
+		components.NewFooterModel(),
 		components.NewConfirmModel(),
 	}
 
@@ -58,7 +66,11 @@ func (m Model) Init() tea.Cmd {
 		// 万が一ステップが空の場合は、ここで初期化
 		m.steps = []tea.Model{
 			components.NewCommitTypeModel(m.config.Types, m.config.UseEmoji),
+			components.NewScopeModel(),
 			components.NewSubjectModel(m.config.MaxSubjectLength),
+			components.NewBodyModel(),
+			components.NewBreakingModel(),
+			components.NewFooterModel(),
 			components.NewConfirmModel(),
 		}
 	}
@@ -79,7 +91,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		// テキスト入力フォーカス中はグローバルショートカットを無効化
-		isInputFocused := m.activeStep == int(StepSubject)
+		isInputFocused := m.activeStep == int(StepScope) || 
+			m.activeStep == int(StepSubject) || 
+			m.activeStep == int(StepBody) ||
+			m.activeStep == int(StepFooter)
 
 		// Global keybindings（テキスト入力中は無効）
 		if !isInputFocused {
@@ -126,8 +141,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, m.steps[m.activeStep].Init()
 
+	case components.ScopeSubmittedMsg:
+		m.commitMessage.Scope = msg.Scope
+		m.activeStep++
+		return m, m.steps[m.activeStep].Init()
+
 	case components.SubjectSubmittedMsg:
 		m.commitMessage.Subject = msg.Subject
+		m.activeStep++
+		return m, m.steps[m.activeStep].Init()
+
+	case components.BodySubmittedMsg:
+		m.commitMessage.Body = msg.Body
+		m.activeStep++
+		return m, m.steps[m.activeStep].Init()
+
+	case components.BreakingSelectedMsg:
+		m.commitMessage.Breaking = msg.IsBreaking
+		m.activeStep++
+		return m, m.steps[m.activeStep].Init()
+
+	case components.FooterSubmittedMsg:
+		m.commitMessage.FooterType = msg.FooterType
+		m.commitMessage.FooterValue = msg.FooterValue
 		m.activeStep++
 		return m, m.steps[m.activeStep].Init()
 
@@ -166,8 +202,16 @@ func (m Model) View() string {
 	switch m.activeStep {
 	case int(StepType):
 		stepTitle = "Select the type of change that you're committing"
+	case int(StepScope):
+		stepTitle = "Denote the scope of this change (optional)"
 	case int(StepSubject):
 		stepTitle = "Write a short, imperative tense description of the change"
+	case int(StepBody):
+		stepTitle = "Provide a longer description of the change (optional)"
+	case int(StepBreaking):
+		stepTitle = "Are there any breaking changes?"
+	case int(StepFooter):
+		stepTitle = "List any issues or breaking changes (optional)"
 	case int(StepConfirm):
 		stepTitle = "Confirm your commit message"
 	}
@@ -196,8 +240,13 @@ func (m Model) View() string {
 	}
 
 	helpText := "↑/↓: Navigate • Enter: Select • Esc: Back • Ctrl+C/Q: Quit"
-	if m.activeStep == int(StepType) {
+	switch m.activeStep {
+	case int(StepType):
 		helpText = "↑/↓: Navigate • 1-9: Quick Select • Enter: Select • Esc: Back • Ctrl+C/Q: Quit"
+	case int(StepBody):
+		helpText = "Type your message • Ctrl+D: Continue • Esc: Back • Ctrl+C: Quit"
+	case int(StepBreaking):
+		helpText = "↑/↓: Navigate • Y/N: Quick Select • Enter: Select • Esc: Back • Ctrl+C: Quit"
 	}
 
 	return fmt.Sprintf("%s\n\n%s\n\n%s",
