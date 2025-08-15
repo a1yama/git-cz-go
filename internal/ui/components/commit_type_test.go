@@ -32,27 +32,27 @@ func TestNewCommitTypeModel(t *testing.T) {
 func TestCommitTypeItemTitle(t *testing.T) {
 	// This test is no longer relevant since we removed commitTypeItem
 	// Instead, test the model's functionality directly
-	
+
 	types := []config.CommitType{
 		{Type: "feat", Description: "A new feature", Emoji: "✨"},
 	}
-	
+
 	model := NewCommitTypeModel(types, false)
 	view := model.View()
-	
+
 	// Check that the view contains expected elements
 	if !containsText(view, "feat") {
 		t.Errorf("View should contain 'feat', got %q", view)
 	}
-	
+
 	if !containsText(view, "A new feature") {
 		t.Errorf("View should contain 'A new feature', got %q", view)
 	}
-	
+
 	// Test with emoji enabled
 	modelWithEmoji := NewCommitTypeModel(types, true)
 	viewWithEmoji := modelWithEmoji.View()
-	
+
 	if !containsText(viewWithEmoji, "✨") {
 		t.Errorf("View with emoji should contain '✨', got %q", viewWithEmoji)
 	}

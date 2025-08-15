@@ -8,9 +8,9 @@ import (
 
 // BodyModel represents the body input component
 type BodyModel struct {
-	textarea        textarea.Model
-	err             error
-	lastWasNewline  bool
+	textarea       textarea.Model
+	err            error
+	lastWasNewline bool
 }
 
 // BodySubmittedMsg is sent when the body is submitted

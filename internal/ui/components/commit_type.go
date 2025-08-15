@@ -2,18 +2,17 @@ package components
 
 import (
 	"fmt"
-	"strings"
 	"github.com/a1yama/git-cz-go/internal/config"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"strings"
 )
 
 // CommitTypeSelectedMsg is sent when a commit type is selected
 type CommitTypeSelectedMsg struct {
 	Type string
 }
-
 
 // CommitTypeModel handles the commit type selection
 type CommitTypeModel struct {
@@ -73,37 +72,37 @@ func (m CommitTypeModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // View renders the model
 func (m CommitTypeModel) View() string {
 	var result strings.Builder
-	
+
 	// Styles for different states
 	selectedStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("86")).
 		Bold(true)
-	
+
 	normalStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("39"))
-		
+
 	descStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("245"))
-	
+
 	cursorStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("86")).
 		Bold(true)
-	
+
 	// Render each commit type option
 	for i, commitType := range m.types {
 		cursor := "   "
 		if i == m.cursor {
 			cursor = cursorStyle.Render("▸  ")
 		}
-		
+
 		// Build the line
 		line := cursor
-		
+
 		// Add number
 		numberStyle := lipgloss.NewStyle().
 			Foreground(lipgloss.Color("243"))
 		line += numberStyle.Render(fmt.Sprintf("%d ", i+1))
-		
+
 		// Add emoji and type
 		var typeText string
 		if m.useEmoji && commitType.Emoji != "" {
@@ -111,29 +110,29 @@ func (m CommitTypeModel) View() string {
 		} else {
 			typeText = commitType.Type
 		}
-		
+
 		if i == m.cursor {
 			line += selectedStyle.Render(typeText)
 		} else {
 			line += normalStyle.Render(typeText)
 		}
-		
+
 		// Add description
 		line += descStyle.Render(fmt.Sprintf(" - %s", commitType.Description))
-		
+
 		result.WriteString(line)
 		if i < len(m.types)-1 {
 			result.WriteString("\n")
 		}
 	}
-	
+
 	// Add hint
 	hintStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("243")).
 		MarginTop(1).
 		Italic(true)
-	
+
 	hint := hintStyle.Render("\n\n💡 Use ↑/↓ arrows or 1-9 keys for selection")
-	
+
 	return result.String() + hint
 }

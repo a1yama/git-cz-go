@@ -193,7 +193,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) getStepNames() []string {
 	return []string{
 		"Type",
-		"Scope", 
+		"Scope",
 		"Subject",
 		"Body",
 		"Breaking",
@@ -212,25 +212,25 @@ func (m Model) getCurrentCommitPreview() string {
 
 	// Build partial commit message
 	preview := ""
-	
+
 	// Add emoji if configured
 	if m.config.UseEmoji && m.commitMessage.Emoji != "" {
 		preview += m.commitMessage.Emoji + " "
 	}
-	
+
 	// Add type
 	preview += m.commitMessage.Type
-	
+
 	// Add scope if set
 	if m.commitMessage.Scope != "" {
 		preview += "(" + m.commitMessage.Scope + ")"
 	}
-	
+
 	// Add breaking change marker if set
 	if m.commitMessage.Breaking {
 		preview += "!"
 	}
-	
+
 	// Add subject if set
 	if m.commitMessage.Subject != "" {
 		preview += ": " + m.commitMessage.Subject
@@ -245,34 +245,34 @@ func (m Model) getCurrentCommitPreview() string {
 func (m Model) renderProgressBar() string {
 	steps := m.getStepNames()
 	var parts []string
-	
+
 	for i, stepName := range steps {
 		var style lipgloss.Style
 		var marker string
-		
+
 		if i < m.activeStep {
 			// Completed step
 			style = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("46")).  // Green
+				Foreground(lipgloss.Color("46")). // Green
 				Bold(true)
 			marker = "✓"
 		} else if i == m.activeStep {
 			// Current step
 			style = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("33")).  // Blue
+				Foreground(lipgloss.Color("33")). // Blue
 				Bold(true)
 			marker = "●"
 		} else {
 			// Future step
 			style = lipgloss.NewStyle().
-				Foreground(lipgloss.Color("243"))  // Gray
+				Foreground(lipgloss.Color("243")) // Gray
 			marker = "○"
 		}
-		
+
 		stepText := fmt.Sprintf("%s %s", marker, stepName)
 		parts = append(parts, style.Render(stepText))
 	}
-	
+
 	return strings.Join(parts, lipgloss.NewStyle().
 		Foreground(lipgloss.Color("243")).
 		Render(" → "))
@@ -315,7 +315,7 @@ func (m Model) View() string {
 			Foreground(lipgloss.Color("86")).
 			Bold(true).
 			MarginBottom(1)
-		
+
 		currentPreview := m.getCurrentCommitPreview()
 		header += previewStyle.Render("Current: ") + currentPreview + "\n\n"
 	}
