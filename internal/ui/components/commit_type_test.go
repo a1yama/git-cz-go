@@ -24,34 +24,79 @@ func TestNewCommitTypeModel(t *testing.T) {
 	}
 
 	// Check if the model initializes correctly
-	if cmd := model.Init(); cmd == nil {
-		t.Error("Init() returned a nil command")
+	if cmd := model.Init(); cmd != nil {
+		t.Error("Init() should return nil for the new simple implementation")
 	}
 }
 
 func TestCommitTypeItemTitle(t *testing.T) {
-	// Test without emoji
-	item := commitTypeItem{
-		type_:       "feat",
-		description: "A new feature",
-		emoji:       "✨",
-		useEmoji:    false,
-		index:       1,
+	// This test is no longer relevant since we removed commitTypeItem
+	// Instead, test the model's functionality directly
+
+	types := []config.CommitType{
+		{Type: "feat", Description: "A new feature", Emoji: "✨"},
 	}
 
-	title := item.Title()
-	expected := "1. feat"
-	if title != expected {
-		t.Errorf("Title() without emoji returned %q, expected %q", title, expected)
+	model := NewCommitTypeModel(types, false)
+	view := model.View()
+
+	// Check that the view contains expected elements
+	if !containsText(view, "feat") {
+		t.Errorf("View should contain 'feat', got %q", view)
 	}
 
-	// Test with emoji
-	item.useEmoji = true
-	title = item.Title()
-	expected = "1. ✨  feat"
-	if title != expected {
-		t.Errorf("Title() with emoji returned %q, expected %q", title, expected)
+	if !containsText(view, "A new feature") {
+		t.Errorf("View should contain 'A new feature', got %q", view)
 	}
+
+	// Test with emoji enabled
+	modelWithEmoji := NewCommitTypeModel(types, true)
+	viewWithEmoji := modelWithEmoji.View()
+
+	if !containsText(viewWithEmoji, "✨") {
+		t.Errorf("View with emoji should contain '✨', got %q", viewWithEmoji)
+	}
+}
+
+// Helper function to check if styled text contains expected content
+func containsText(styled, expected string) bool {
+	// Remove ANSI escape sequences and check content
+	cleaned := stripANSI(styled)
+	return len(cleaned) > 0 && contains(cleaned, expected)
+}
+
+// Simple contains check
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && findSubstring(s, substr)
+}
+
+func findSubstring(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
+}
+
+// Simple ANSI escape sequence stripper
+func stripANSI(s string) string {
+	result := ""
+	inEscape := false
+	for _, r := range s {
+		if r == '\x1b' {
+			inEscape = true
+			continue
+		}
+		if inEscape {
+			if r == 'm' {
+				inEscape = false
+			}
+			continue
+		}
+		result += string(r)
+	}
+	return result
 }
 
 func TestCommitTypeModelUpdate(t *testing.T) {
@@ -64,28 +109,27 @@ func TestCommitTypeModelUpdate(t *testing.T) {
 	// Create model
 	model := NewCommitTypeModel(types, false)
 
-	// Test window size message
-	windowSizeMsg := tea.WindowSizeMsg{Width: 100, Height: 50}
-	updatedModel, cmd := model.Update(windowSizeMsg)
+	// Test navigation with arrow keys
+	keyMsg := tea.KeyMsg{Type: tea.KeyDown}
+	updatedModel, cmd := model.Update(keyMsg)
 
 	// Check that the model was updated
 	if updatedModel == nil {
 		t.Error("Update() returned nil model")
 	}
 
-	// Check that no command was returned
-	if cmd != nil {
-		t.Error("Update() with WindowSizeMsg returned a non-nil command")
-	}
-
-	// Check that the model is still a CommitTypeModel
-	_, ok := updatedModel.(CommitTypeModel)
+	// Check that cursor moved
+	typedModel, ok := updatedModel.(CommitTypeModel)
 	if !ok {
 		t.Error("Update() returned a model that is not a CommitTypeModel")
 	}
 
+	if typedModel.cursor != 1 {
+		t.Errorf("Expected cursor to be 1, got %d", typedModel.cursor)
+	}
+
 	// Test numerical key press
-	keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}}
+	keyMsg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}}
 	updatedModel, cmd = model.Update(keyMsg)
 
 	// Check that the model was updated

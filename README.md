@@ -2,13 +2,19 @@
 
 A beautiful and interactive Conventional Commits CLI tool written in Go using [Bubble Tea](https://github.com/charmbracelet/bubbletea).
 
+![Demo](docs/assets/demo.gif)
+
 ## Features
 
 - 💎 Beautiful TUI with keyboard navigation
 - 🚀 Interactive prompts for all parts of the commit message
-- 📋 Conventional Commits format support
-- 🔍 Scope suggestions from your project structure
-- 🔢 Quick selection of commit types using numbers
+- 📋 Full Conventional Commits format support
+  - Type, scope, subject, body, breaking changes, and footer
+- 🔍 Scope input for categorizing changes
+- 📝 Multi-line body editor for detailed descriptions
+- ⚠️ Breaking change indicator
+- 🔗 Footer for issue references and metadata
+- 🔢 Quick selection using number keys (1-9) and Y/N shortcuts
 - 😀 Optional emoji support
 - ⚙️ Customizable via configuration file
 - 🌈 Color-coded interface
@@ -33,9 +39,18 @@ Simply run `git-cz-go` in a git repository to start the interactive commit proce
 git-cz-go
 ```
 
-When selecting a commit type, you can either:
-- Use arrow keys to navigate and press Enter to select
-- Press the number key (1-9) corresponding to the commit type you want to select
+### Navigation
+
+- **Commit Type**: Use arrow keys or press 1-9 for quick selection
+- **Scope**: Enter scope manually (optional, press Enter to skip)
+- **Subject**: Type your commit message
+- **Body**: Multi-line editor (Ctrl+D to continue, optional)
+- **Breaking Change**: Use arrow keys or Y/N for quick selection
+- **Footer**: Enter issue references (optional, press Enter to skip)
+- **General**: 
+  - `Esc` to go back to previous step
+  - `Ctrl+C` to cancel
+  - `Enter` to confirm/continue
 
 To view the list of available commit types:
 
@@ -94,7 +109,7 @@ Example configuration:
 
 ### Prerequisites
 
-- Go 1.20 or higher
+- Go 1.25 or higher
 
 ### Build from source
 

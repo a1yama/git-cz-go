@@ -11,6 +11,7 @@ import (
 	"github.com/a1yama/git-cz-go/internal/ui/styles"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // Model is the main UI model
@@ -30,7 +31,11 @@ type Step int
 
 const (
 	StepType Step = iota
+	StepScope
 	StepSubject
+	StepBody
+	StepBreaking
+	StepFooter
 	StepConfirm
 )
 
@@ -39,7 +44,11 @@ func New(cfg *config.Config) Model {
 	// ステップを初期化
 	steps := []tea.Model{
 		components.NewCommitTypeModel(cfg.Types, cfg.UseEmoji),
+		components.NewScopeModel(),
 		components.NewSubjectModel(cfg.MaxSubjectLength),
+		components.NewBodyModel(),
+		components.NewBreakingModel(),
+		components.NewFooterModel(),
 		components.NewConfirmModel(),
 	}
 
@@ -58,7 +67,11 @@ func (m Model) Init() tea.Cmd {
 		// 万が一ステップが空の場合は、ここで初期化
 		m.steps = []tea.Model{
 			components.NewCommitTypeModel(m.config.Types, m.config.UseEmoji),
+			components.NewScopeModel(),
 			components.NewSubjectModel(m.config.MaxSubjectLength),
+			components.NewBodyModel(),
+			components.NewBreakingModel(),
+			components.NewFooterModel(),
 			components.NewConfirmModel(),
 		}
 	}
@@ -79,7 +92,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.KeyMsg:
 		// テキスト入力フォーカス中はグローバルショートカットを無効化
-		isInputFocused := m.activeStep == int(StepSubject)
+		isInputFocused := m.activeStep == int(StepScope) ||
+			m.activeStep == int(StepSubject) ||
+			m.activeStep == int(StepBody) ||
+			m.activeStep == int(StepFooter)
 
 		// Global keybindings（テキスト入力中は無効）
 		if !isInputFocused {
@@ -126,8 +142,29 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, m.steps[m.activeStep].Init()
 
+	case components.ScopeSubmittedMsg:
+		m.commitMessage.Scope = msg.Scope
+		m.activeStep++
+		return m, m.steps[m.activeStep].Init()
+
 	case components.SubjectSubmittedMsg:
 		m.commitMessage.Subject = msg.Subject
+		m.activeStep++
+		return m, m.steps[m.activeStep].Init()
+
+	case components.BodySubmittedMsg:
+		m.commitMessage.Body = msg.Body
+		m.activeStep++
+		return m, m.steps[m.activeStep].Init()
+
+	case components.BreakingSelectedMsg:
+		m.commitMessage.Breaking = msg.IsBreaking
+		m.activeStep++
+		return m, m.steps[m.activeStep].Init()
+
+	case components.FooterSubmittedMsg:
+		m.commitMessage.FooterType = msg.FooterType
+		m.commitMessage.FooterValue = msg.FooterValue
 		m.activeStep++
 		return m, m.steps[m.activeStep].Init()
 
@@ -152,6 +189,95 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
+// getStepNames returns the names of all steps
+func (m Model) getStepNames() []string {
+	return []string{
+		"Type",
+		"Scope",
+		"Subject",
+		"Body",
+		"Breaking",
+		"Footer",
+		"Confirm",
+	}
+}
+
+// getCurrentCommitPreview returns a preview of the current commit message
+func (m Model) getCurrentCommitPreview() string {
+	if m.commitMessage.Type == "" {
+		return lipgloss.NewStyle().
+			Foreground(lipgloss.Color("243")).
+			Render("No selections yet...")
+	}
+
+	// Build partial commit message
+	preview := ""
+
+	// Add emoji if configured
+	if m.config.UseEmoji && m.commitMessage.Emoji != "" {
+		preview += m.commitMessage.Emoji + " "
+	}
+
+	// Add type
+	preview += m.commitMessage.Type
+
+	// Add scope if set
+	if m.commitMessage.Scope != "" {
+		preview += "(" + m.commitMessage.Scope + ")"
+	}
+
+	// Add breaking change marker if set
+	if m.commitMessage.Breaking {
+		preview += "!"
+	}
+
+	// Add subject if set
+	if m.commitMessage.Subject != "" {
+		preview += ": " + m.commitMessage.Subject
+	} else if m.activeStep > int(StepScope) {
+		preview += ": ..."
+	}
+
+	return preview
+}
+
+// renderProgressBar renders a progress bar showing completion status
+func (m Model) renderProgressBar() string {
+	steps := m.getStepNames()
+	var parts []string
+
+	for i, stepName := range steps {
+		var style lipgloss.Style
+		var marker string
+
+		if i < m.activeStep {
+			// Completed step
+			style = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("46")). // Green
+				Bold(true)
+			marker = "✓"
+		} else if i == m.activeStep {
+			// Current step
+			style = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("33")). // Blue
+				Bold(true)
+			marker = "●"
+		} else {
+			// Future step
+			style = lipgloss.NewStyle().
+				Foreground(lipgloss.Color("243")) // Gray
+			marker = "○"
+		}
+
+		stepText := fmt.Sprintf("%s %s", marker, stepName)
+		parts = append(parts, style.Render(stepText))
+	}
+
+	return strings.Join(parts, lipgloss.NewStyle().
+		Foreground(lipgloss.Color("243")).
+		Render(" → "))
+}
+
 // View renders the UI
 func (m Model) View() string {
 	if !m.ready {
@@ -166,26 +292,45 @@ func (m Model) View() string {
 	switch m.activeStep {
 	case int(StepType):
 		stepTitle = "Select the type of change that you're committing"
+	case int(StepScope):
+		stepTitle = "Denote the scope of this change (optional)"
 	case int(StepSubject):
 		stepTitle = "Write a short, imperative tense description of the change"
+	case int(StepBody):
+		stepTitle = "Provide a longer description of the change (optional)"
+	case int(StepBreaking):
+		stepTitle = "Are there any breaking changes?"
+	case int(StepFooter):
+		stepTitle = "List any issues or breaking changes (optional)"
 	case int(StepConfirm):
 		stepTitle = "Confirm your commit message"
 	}
 
-	// Display progress
-	progress := fmt.Sprintf(" %d/%d ", m.activeStep+1, len(m.steps))
+	// Create header with title
+	header := styles.HeaderStyle.Render("Git Conventional Commit") + "\n\n"
 
-	header := styles.HeaderStyle.Render("Git Conventional Commit") +
-		styles.ProgressStyle.Render(progress) +
-		"\n\n" +
-		styles.StepTitleStyle.Render(stepTitle) +
-		"\n" +
+	// Add current commit preview (if we have selections)
+	if m.commitMessage.Type != "" {
+		previewStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("86")).
+			Bold(true).
+			MarginBottom(1)
+
+		currentPreview := m.getCurrentCommitPreview()
+		header += previewStyle.Render("Current: ") + currentPreview + "\n\n"
+	}
+
+	// Add progress bar
+	header += m.renderProgressBar() + "\n\n"
+
+	// Add step title
+	header += styles.StepTitleStyle.Render(stepTitle) + "\n" +
 		styles.DividerStyle.Render(strings.Repeat("─", m.width))
 
 	if m.activeStep == int(StepConfirm) {
 		// For confirmation step, add commit message preview
 		preview := m.commitMessage.Format()
-		header += "\n" + styles.PreviewStyle.Render("Preview:") + "\n\n" +
+		header += "\n" + styles.PreviewStyle.Render("Final Preview:") + "\n\n" +
 			styles.PreviewContentStyle.Render(preview)
 	}
 
@@ -196,8 +341,13 @@ func (m Model) View() string {
 	}
 
 	helpText := "↑/↓: Navigate • Enter: Select • Esc: Back • Ctrl+C/Q: Quit"
-	if m.activeStep == int(StepType) {
+	switch m.activeStep {
+	case int(StepType):
 		helpText = "↑/↓: Navigate • 1-9: Quick Select • Enter: Select • Esc: Back • Ctrl+C/Q: Quit"
+	case int(StepBody):
+		helpText = "Type message • Enter on empty or Enter twice: Continue • Ctrl+D: Continue • Esc: Back • Ctrl+C: Quit"
+	case int(StepBreaking):
+		helpText = "↑/↓: Navigate • Y/N: Quick Select • Enter: Select • Esc: Back • Ctrl+C: Quit"
 	}
 
 	return fmt.Sprintf("%s\n\n%s\n\n%s",
