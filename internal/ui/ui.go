@@ -244,7 +244,7 @@ func (m Model) View() string {
 	case int(StepType):
 		helpText = "↑/↓: Navigate • 1-9: Quick Select • Enter: Select • Esc: Back • Ctrl+C/Q: Quit"
 	case int(StepBody):
-		helpText = "Type your message • Ctrl+D: Continue • Esc: Back • Ctrl+C: Quit"
+		helpText = "Type message • Enter on empty or Enter twice: Continue • Ctrl+D: Continue • Esc: Back • Ctrl+C: Quit"
 	case int(StepBreaking):
 		helpText = "↑/↓: Navigate • Y/N: Quick Select • Enter: Select • Esc: Back • Ctrl+C: Quit"
 	}
