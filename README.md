@@ -109,7 +109,7 @@ Example configuration:
 
 ### Prerequisites
 
-- Go 1.20 or higher
+- Go 1.25 or higher
 
 ### Build from source
 
