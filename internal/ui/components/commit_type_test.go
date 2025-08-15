@@ -24,36 +24,37 @@ func TestNewCommitTypeModel(t *testing.T) {
 	}
 
 	// Check if the model initializes correctly
-	if cmd := model.Init(); cmd == nil {
-		t.Error("Init() returned a nil command")
+	if cmd := model.Init(); cmd != nil {
+		t.Error("Init() should return nil for the new simple implementation")
 	}
 }
 
 func TestCommitTypeItemTitle(t *testing.T) {
-	// Test without emoji
-	item := commitTypeItem{
-		type_:       "feat",
-		description: "A new feature",
-		emoji:       "✨",
-		useEmoji:    false,
-		index:       1,
+	// This test is no longer relevant since we removed commitTypeItem
+	// Instead, test the model's functionality directly
+	
+	types := []config.CommitType{
+		{Type: "feat", Description: "A new feature", Emoji: "✨"},
 	}
-
-	title := item.Title()
-	// 新しい形式では番号は styled prefix で、"1 feat"形式になる
-	if title == "" {
-		t.Error("Title() without emoji returned empty string")
+	
+	model := NewCommitTypeModel(types, false)
+	view := model.View()
+	
+	// Check that the view contains expected elements
+	if !containsText(view, "feat") {
+		t.Errorf("View should contain 'feat', got %q", view)
 	}
-	// スタイルを含むので、正確な文字列マッチングではなく、含まれる内容をチェック
-	if !containsText(title, "1") || !containsText(title, "feat") {
-		t.Errorf("Title() without emoji should contain '1' and 'feat', got %q", title)
+	
+	if !containsText(view, "A new feature") {
+		t.Errorf("View should contain 'A new feature', got %q", view)
 	}
-
-	// Test with emoji
-	item.useEmoji = true
-	title = item.Title()
-	if !containsText(title, "1") || !containsText(title, "✨") || !containsText(title, "feat") {
-		t.Errorf("Title() with emoji should contain '1', '✨' and 'feat', got %q", title)
+	
+	// Test with emoji enabled
+	modelWithEmoji := NewCommitTypeModel(types, true)
+	viewWithEmoji := modelWithEmoji.View()
+	
+	if !containsText(viewWithEmoji, "✨") {
+		t.Errorf("View with emoji should contain '✨', got %q", viewWithEmoji)
 	}
 }
 
@@ -108,28 +109,27 @@ func TestCommitTypeModelUpdate(t *testing.T) {
 	// Create model
 	model := NewCommitTypeModel(types, false)
 
-	// Test window size message
-	windowSizeMsg := tea.WindowSizeMsg{Width: 100, Height: 50}
-	updatedModel, cmd := model.Update(windowSizeMsg)
+	// Test navigation with arrow keys
+	keyMsg := tea.KeyMsg{Type: tea.KeyDown}
+	updatedModel, cmd := model.Update(keyMsg)
 
 	// Check that the model was updated
 	if updatedModel == nil {
 		t.Error("Update() returned nil model")
 	}
 
-	// Check that no command was returned
-	if cmd != nil {
-		t.Error("Update() with WindowSizeMsg returned a non-nil command")
-	}
-
-	// Check that the model is still a CommitTypeModel
-	_, ok := updatedModel.(CommitTypeModel)
+	// Check that cursor moved
+	typedModel, ok := updatedModel.(CommitTypeModel)
 	if !ok {
 		t.Error("Update() returned a model that is not a CommitTypeModel")
 	}
 
+	if typedModel.cursor != 1 {
+		t.Errorf("Expected cursor to be 1, got %d", typedModel.cursor)
+	}
+
 	// Test numerical key press
-	keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}}
+	keyMsg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'1'}}
 	updatedModel, cmd = model.Update(keyMsg)
 
 	// Check that the model was updated
